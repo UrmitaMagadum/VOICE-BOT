@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VOICE BOT</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(153, 13, 73, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(204, 230, 73, 0.3);
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            text-align: center;
+            color: #0ee7e0;
+            margin-bottom: 10px;
+            font-size: 38px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #000000;
+            margin-bottom: 30px;
+            font-size: 18px;
+        }
+
+        .voice-visualizer {
+            height: 80px;
+            background: linear-gradient(90deg, #e04bb6, #764ba2);
+            border-radius: 12px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .voice-wave {
+            display: flex;
+            gap: 4px;
+            height: 100%;
+            align-items: center;
+        }
+
+        .wave-bar {
+            width: 4px;
+            background: rgb(21, 11, 11);
+            border-radius: 2px;
+            transition: height 0.2s ease;
+            opacity: 0.8;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .listen-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: rgb(13, 12, 12);
+        }
+
+        .listen-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .listen-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .listening {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 15px rgba(102, 126, 234, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(102, 126, 234, 0);
+            }
+        }
+
+        .stop-btn {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .stop-btn:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(231, 76, 60, 0.4);
+        }
+
+        .chat-container {
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 20px;
+            background: #1c1e1e;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .user-message {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: rgb(232, 241, 241);
+            align-self: flex-end;
+            margin-left: 20%;
+        }
+
+        .bot-message {
+            background: rgb(180, 231, 230);
+            color: #333;
+            align-self: flex-start;
+            margin-right: 20%;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .status {
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .status.ready {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.listening {
+            background: #cce5ff;
+            color: #004085;
+        }
+
+        .status.speaking {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .sample-questions {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e1d718;
+            border-radius: 12px;
+        }
+
+        .sample-questions h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .sample-questions ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .sample-questions li {
+            color: #555;
+            padding: 5px 0;
+            font-size: 14px;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .sample-questions li:hover {
+            color: #667eea;
+        }
+
+        .sample-questions li:before {
+            content: "→ ";
+            color: #764ba2;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤VOICE BOT</h1>
+        <p class="subtitle">Your AI Listener – Just say the word to start your self-discovery</p>
+        
+        <div class="status ready" id="status">Ready to listen</div>
+        
+        <div class="voice-visualizer">
+            <div class="voice-wave" id="voiceWave">
+                <div class="wave-bar" style="height: 20px;"></div>
+                <div class="wave-bar" style="height: 35px;"></div>
+                <div class="wave-bar" style="height: 25px;"></div>
+                <div class="wave-bar" style="height: 45px;"></div>
+                <div class="wave-bar" style="height: 30px;"></div>
+                <div class="wave-bar" style="height: 40px;"></div>
+                <div class="wave-bar" style="height: 25px;"></div>
+                <div class="wave-bar" style="height: 35px;"></div>
+                <div class="wave-bar" style="height: 20px;"></div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button class="listen-btn" id="listenBtn" onclick="toggleListening()">
+                Start Listening
+            </button>
+            <button class="stop-btn" onclick="stopSpeaking()">
+                Stop Speaking
+            </button>
+        </div>
+        
+        <div class="chat-container" id="chatContainer">
+            <div class="bot-message message">
+                Hi there! I'm ready to share my professional story with you. Ask me anything about my background, strengths, growth areas, or how I work with others. You can speak your question or click one of the samples below!
+            </div>
+        </div>
+        
+        <div class="sample-questions">
+            <h3>Sample Questions (click to ask):</h3>
+            <ul>
+                <li onclick="askQuestion(this.textContent.substring(2))">What should we know about your life story?</li>
+                <li onclick="askQuestion(this.textContent.substring(2))">What's your #1 superpower?</li>
+                <li onclick="askQuestion(this.textContent.substring(2))">What are the top 3 areas you'd like to grow in?</li>
+                <li onclick="askQuestion(this.textContent.substring(2))">What misconception do your coworkers have about you?</li>
+                <li onclick="askQuestion(this.textContent.substring(2))">How do you push your boundaries and limits?</li>
+                <li onclick="askQuestion(this.textContent.substring(2))">What motivates you most at work?</li>
+                
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        let recognition;
+        let synthesis = window.speechSynthesis;
+        let isListening = false;
+        let currentUtterance = null;
+
+        // Bot responses database - Personal, human-style responses
+        const responses = {
+            "life story": "I grew up in a small village in Belagavi, in a farming family that shaped my values of resilience and hard work. My father, a farmer, has been my greatest inspiration, while my mother and brother have always supported and guided me. I completed my schooling in my village, then pursued Computer Science Engineering, where I discovered my passion for solving problems with technology. My journey has been about growth — rooted in my village, strengthened by my family, and driven by a vision to make a difference through technology.",
+            
+            "superpower": "Computer Science graduate with a strong foundation in full-stack development, machine learning, and software engineering. Grew up in a farming village in Karnataka, where resilience and hard work were part of daily life. My #1 superpower is growing through every challenge—whether it's adapting to new environments, solving complex problems, or leading impactful projects. I bring a grounded mindset, strong family values, and a passion for building tech that makes a difference. Supported by a professor brother and inspired by my farmer father, I’ve developed a unique blend of technical skill and emotional intelligence that helps me thrive in collaborative, fast-paced environments.",
+            
+            "grow in": "The top areas I’d like to grow in are artificial intelligence and software development. I’ve built a strong foundation in machine learning through academic projects, but I’m eager to dive deeper into advanced AI techniques like neural networks, NLP, and real-world deployment strategies. I want to explore how AI can solve meaningful problems, especially in sectors like agriculture and sustainability that connect to my roots. On the development side, I’m focused on sharpening my full-stack skills and mastering modern frameworks to build scalable, user-friendly applications.",
+            
+            "misconception" : "The biggest misconception my coworkers have about me is that I’m always confident and have everything figured out. I tend to stay calm under pressure and usually have a backup plan ready, so people assume I never doubt myself. But the truth is, I second-guess my decisions all the time—I just don’t show it until after we’ve committed to a path. Behind the scenes, I spend a lot of time overthinking, running through scenarios, and questioning whether I’ve made the right call. Over time, I’ve learned to project confidence even when I’m uncertain, because teams need that sense of stability. It’s not about pretending—it’s about being steady for others while quietly working through the doubts myself.",
+            
+            "boundaries": "I push my boundaries by taking on projects outside my comfort zone. For example, during my internships I worked on AI and full-stack development projects that required me to quickly learn new tools. I also challenge myself to improve communication and teamwork skills, which helps me grow both technically and personally.",
+            
+            "motivates": "What motivates me most at work is the opportunity to solve real-world problems and see the impact of my contributions. I feel energized when I can apply my skills in areas like AI, machine learning, and full-stack development to create solutions that make tasks easier or more efficient. Continuous learning also drives me—I enjoy picking up new tools and technologies. Finally, working with a supportive team and achieving goals together gives me a strong sense of motivation.",
+            
+            "challenge": "One of my biggest challenges was when our main product had a critical failure right before a major client demo. The engineering team was in panic mode, sales was freaking out, and everyone was pointing fingers. I pulled together a war room, created a clear communication plan, and worked with the team for 36 hours straight. But more importantly, I kept everyone focused on solutions rather than blame. We not only fixed the issue but implemented better testing procedures. The client ended up being impressed by our transparency and problem-solving approach, and they signed an even bigger contract. It taught me that crises can become opportunities if handled right.",
+            
+            "leadership": "My leadership style is collaborative but decisive. I believe in gathering input from everyone - the quiet junior developer often has the best ideas - but I'm not afraid to make tough calls when needed. I lead by example, I'm never asking my team to do something I wouldn't do myself. I'm big on psychological safety; I want people to feel comfortable taking risks and admitting mistakes. I also adapt my style to individuals - some people need more guidance, others need space to run. The key is knowing your team well enough to give each person what they need to succeed.",
+            
+            "strengths": "My core strengths are pattern recognition, strategic thinking, and building relationships. I'm really good at seeing connections others might miss - whether it's spotting market trends or understanding how different parts of a system interact. I can zoom out to see the big picture, then zoom in to handle the details. And I genuinely enjoy connecting with people, which helps me build strong networks both inside and outside the company. These relationships often become invaluable when we need to move quickly or get buy-in for initiatives.",
+            
+            "weakness": "My biggest weakness is probably perfectionism. I can spend too much time polishing something that's already good enough, especially on presentations or strategic documents. I've been working on embracing the 80-20 rule and knowing when to ship versus when to refine. I'm also working on delegation - my instinct is to handle things myself to ensure they're done right, but I'm learning that developing others means letting them make mistakes and learn from them.",
+            
+            "team": "I work best in diverse, cross-functional teams where everyone brings different perspectives. I love the energy of collaborative brainstorming sessions where we build on each other's ideas. I'm usually the one who makes sure everyone's voice is heard, especially the introverts who might not speak up naturally. I also enjoy being the connective tissue between different departments - helping marketing understand what engineering is building, or helping product understand what sales is hearing from customers. My ideal team is one where we challenge each other respectfully and celebrate wins together.",
+            
+            "default": "That's a great question! I believe in being authentic and transparent in my responses. Every experience, whether it's a success or failure, has shaped who I am professionally. I try to approach each situation with curiosity and a growth mindset. What specific aspect would you like me to elaborate on? I'm happy to go deeper into any area of my professional journey or working style."
+        };
+
+        // Initialize speech recognition
+        function initSpeechRecognition() {
+            if ('webkitSpeechRecognition' in window) {
+                recognition = new webkitSpeechRecognition();
+            } else if ('SpeechRecognition' in window) {
+                recognition = new SpeechRecognition();
+            } else {
+                updateStatus('Speech recognition not supported in your browser', 'error');
+                document.getElementById('listenBtn').disabled = true;
+                return;
+            }
+
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US';
+
+            recognition.onstart = function() {
+                isListening = true;
+                updateStatus('Listening...', 'listening');
+                document.getElementById('listenBtn').textContent = 'Stop Listening';
+                document.getElementById('listenBtn').classList.add('listening');
+                animateWave(true);
+            };
+
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                processUserInput(transcript);
+            };
+
+            recognition.onerror = function(event) {
+                updateStatus('Error: ' + event.error, 'error');
+                stopListening();
+            };
+
+            recognition.onend = function() {
+                stopListening();
+            };
+        }
+
+        function toggleListening() {
+            if (isListening) {
+                stopListening();
+            } else {
+                startListening();
+            }
+        }
+
+        function startListening() {
+            if (recognition) {
+                recognition.start();
+            }
+        }
+
+        function stopListening() {
+            if (recognition) {
+                recognition.stop();
+            }
+            isListening = false;
+            updateStatus('Ready to listen', 'ready');
+            document.getElementById('listenBtn').textContent = 'Start Listening';
+            document.getElementById('listenBtn').classList.remove('listening');
+            animateWave(false);
+        }
+
+        function processUserInput(text) {
+            addMessage(text, 'user');
+            const response = generateResponse(text);
+            addMessage(response, 'bot');
+            speakResponse(response);
+        }
+
+        function generateResponse(input) {
+    const lowerInput = input.toLowerCase();
+
+    if (lowerInput.includes('misconception') || lowerInput.includes('misunderstand') || lowerInput.includes('wrong about you')) {
+        return responses["misconception"];
+    } else if (lowerInput.includes('life story') || lowerInput.includes('background') || lowerInput.includes('about you') || lowerInput.includes('tell me about yourself')) {
+        return responses["life story"];
+    } else if (lowerInput.includes('superpower') || lowerInput.includes('super power') || lowerInput.includes('greatest strength')) {
+        return responses["superpower"];
+    } else if (lowerInput.includes('grow') || lowerInput.includes('development')) {
+        return responses["grow in"];
+    } else if (lowerInput.includes('boundaries') || lowerInput.includes('limits') || lowerInput.includes('push') || lowerInput.includes('comfort zone')) {
+        return responses["boundaries"];
+    } else if (lowerInput.includes('motivat') || lowerInput.includes('driv') || lowerInput.includes('excite')) {
+        return responses["motivates"];
+    } else if (lowerInput.includes('challenge') || lowerInput.includes('difficult') || lowerInput.includes('overcome') || lowerInput.includes('obstacle')) {
+        return responses["challenge"];
+    } else if (lowerInput.includes('leadership') || lowerInput.includes('lead') || lowerInput.includes('manag')) {
+        return responses["leadership"];
+    } else if (lowerInput.includes('strength') && !lowerInput.includes('superpower')) {
+        return responses["strengths"];
+    } else if (lowerInput.includes('weakness')) {
+        return responses["weakness"];
+    } else if (lowerInput.includes('team') || lowerInput.includes('collaborat') || lowerInput.includes('work with others')) {
+        return responses["team"];
+    } else {
+        return responses["default"];
+    }
+}
+
+
+        function addMessage(text, sender) {
+            const chatContainer = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}-message`;
+            messageDiv.textContent = text;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function speakResponse(text) {
+            stopSpeaking();
+            currentUtterance = new SpeechSynthesisUtterance(text);
+            currentUtterance.rate = 1.0;
+            currentUtterance.pitch = 1.0;
+            
+            currentUtterance.onstart = function() {
+                updateStatus('Speaking...', 'speaking');
+                animateWave(true);
+            };
+            
+            currentUtterance.onend = function() {
+                updateStatus('Ready to listen', 'ready');
+                animateWave(false);
+            };
+            
+            synthesis.speak(currentUtterance);
+        }
+
+        function stopSpeaking() {
+            if (synthesis.speaking) {
+                synthesis.cancel();
+            }
+            animateWave(false);
+            updateStatus('Ready to listen', 'ready');
+        }
+
+        function askQuestion(question) {
+            processUserInput(question);
+        }
+
+        function updateStatus(text, className) {
+            const status = document.getElementById('status');
+            status.textContent = text;
+            status.className = 'status ' + className;
+        }
+
+        function animateWave(active) {
+            const bars = document.querySelectorAll('.wave-bar');
+            if (active) {
+                bars.forEach((bar, i) => {
+                    const animate = () => {
+                        if (!isListening && !synthesis.speaking) return;
+                        const height = Math.random() * 40 + 10;
+                        bar.style.height = height + 'px';
+                        setTimeout(() => animate(), 200 + Math.random() * 300);
+                    };
+                    setTimeout(() => animate(), i * 100);
+                });
+            } else {
+                bars.forEach((bar, i) => {
+                    bar.style.height = (20 + i * 5 % 25) + 'px';
+                });
+            }
+        }
+
+        // Initialize on page load
+        window.onload = function() {
+            initSpeechRecognition();
+        };
+    </script>
+</body>
+</html>
